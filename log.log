@@ -1,0 +1,12 @@
+Apr 16, 2022 9:00:10 PM org.voxelgame.VoxelGame run
+INFO: Using LWJGL 3.3.1 build 7
+Apr 16, 2022 9:00:10 PM org.voxelgame.VoxelGame init
+INFO: creating shader
+Apr 16, 2022 9:00:10 PM org.voxelgame.VoxelGame init
+INFO: creating mesh
+Apr 16, 2022 9:00:10 PM org.voxelgame.VoxelGame init
+INFO: Finished Initialization!
+Apr 16, 2022 9:00:10 PM org.voxelgame.VoxelGame lambda$init$0
+INFO: GL CALLBACK: source: 33350 type:  severity: 33387 message: Buffer detailed info: Buffer object 1 (bound to GL_ARRAY_BUFFER_ARB, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations.
+Apr 16, 2022 9:00:10 PM org.voxelgame.VoxelGame lambda$init$0
+INFO: GL CALLBACK: source: 33350 type:  severity: 33387 message: Buffer detailed info: Buffer object 2 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations.

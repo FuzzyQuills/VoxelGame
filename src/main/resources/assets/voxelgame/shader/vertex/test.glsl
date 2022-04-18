@@ -14,7 +14,7 @@ void main() {
     vec4 mvPos = model * vec4(aPos, 1.0);
     gl_Position = projection * view * mvPos;
 
-    mvVertexNormal = normalize(model * vec4(aNorm, 0.0)).xyz;
+    mvVertexNormal = aNorm;//normalize(model * vec4(aNorm, 0.0)).xyz;
 
     mvVertexPos = mvPos.xyz;
 }

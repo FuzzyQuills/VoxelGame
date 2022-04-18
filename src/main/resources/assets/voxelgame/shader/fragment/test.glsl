@@ -49,8 +49,8 @@ void setupColors(Material material, vec2 textCoord){
 }
 
 vec4 calcPointLight(PointLight light, vec3 position, vec3 normal){
-    vec4 diffuseColor = vec4(0.0);
-    vec4 specColor = vec4(0.0);
+    vec4 diffuseColor = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 specColor = vec4(0.0, 0.0, 0.0, 0.0);
 
     // Diffuse Light
     vec3 light_direction = light.position - position;
@@ -64,7 +64,7 @@ vec4 calcPointLight(PointLight light, vec3 position, vec3 normal){
     vec3 reflected_light = normalize(reflect(from_light_source, normal));
     float specularFactor = max(dot(camera_direction, reflected_light), 0.0);
     specularFactor = pow(specularFactor, specularPower);
-    specColor = specularC * specularFactor * material.reflectance * vec4(light.color, 1.0);
+    specColor = specularC * light.intensity * specularFactor * material.reflectance * vec4(light.color, 1.0);
 
     // Attenuation
     float distance = length(light_direction);
@@ -77,4 +77,5 @@ void main() {
     vec4 diffuseSpecularComp = calcPointLight(pointLight, mvVertexPos, mvVertexNormal);
 
     FragColor = ambientC * vec4(ambientLight, 1) + diffuseSpecularComp;
+    //FragColor = vec4(mvVertexNormal, 1.0);
 }

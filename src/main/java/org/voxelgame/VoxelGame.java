@@ -1,10 +1,7 @@
 package org.voxelgame;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.joml.Vector4f;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -18,18 +15,19 @@ import org.voxelgame.rendering.lighting.Attenuation;
 import org.voxelgame.rendering.lighting.PointLight;
 
 import java.io.IOException;
-import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
+import java.util.Objects;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import static org.lwjgl.glfw.Callbacks.*;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL43.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.system.MemoryUtil.memUTF8;
 
 
 public class VoxelGame {
@@ -38,7 +36,6 @@ public class VoxelGame {
 
     public static AssetLoader ASSET_LOADER = new AssetLoader();
     public static Logger LOGGER = Logger.getLogger("Log");
-    private static FileHandler fh;
     public  static Camera CAMERA;
 
     public static float MOUSE_X, MOUSE_Y, LAST_MOUSE_X, LAST_MOUSE_Y, MOUSE_DELTA_X, MOUSE_DELTA_Y;
@@ -63,7 +60,7 @@ public class VoxelGame {
 
 
         glfwTerminate();
-        glfwSetErrorCallback(null).free();
+        Objects.requireNonNull(glfwSetErrorCallback(null)).free();
     }
 
     private void init(){
@@ -91,6 +88,7 @@ public class VoxelGame {
 
             GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
+            assert vidmode != null;
             glfwSetWindowPos(window,
                     (vidmode.width() - pWidth.get(0)) / 2,
                     (vidmode.height() - pHeight.get(0)) / 2);
@@ -108,9 +106,7 @@ public class VoxelGame {
 
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEPTH_TEST);
-        glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> {
-            LOGGER.info("GL CALLBACK: source: " + source + " type: " + (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "") + " severity: " + severity + " message: " + memUTF8(message, length));
-        }, 0);
+        glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> LOGGER.info("GL CALLBACK: source: " + source + " type: " + (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "") + " severity: " + severity + " message: " + memUTF8(message, length)), 0);
 
         glfwSetKeyCallback(window, (windowHnd, key, scancode, action, mods) -> {
             if (action != GLFW_RELEASE)
@@ -157,6 +153,7 @@ public class VoxelGame {
                 -1.0f, 1.0f, 1.0f,
                 -1.0f, -1.0f, 1.0f
         };
+
         int[] indices =
                 {
                         4, 2, 0,
@@ -177,15 +174,15 @@ public class VoxelGame {
         testMesh.setPosition(new Vector3f(0.0f, 0.0f, -2.0f));
 
         PointLight pointLight = new PointLight();
-        pointLight.setPosition(new Vector3f(0.0f, 3.0f, 0.0f));
+        pointLight.setPosition(new Vector3f(0.0f, 3.0f, -2.0f));
         pointLight.setAtt(new Attenuation(0.0f, 0.0f, 1.0f));
         pointLight.setColor(new Vector3f(1.0f, 1.0f, 1.0f));
         pointLight.setIntensity(1.0f);
 
         Material mat = new Material();
-        mat.setReflectance(1.0f);
+        mat.setReflectance(0.0f);
         mat.setHasTexture(false);
-        mat.setAmbient(new Vector4f(0.4f, 0.4f, 0.4f, 1.0f));
+        mat.setAmbient(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
         mat.setDiffuse(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
         mat.setSpecular(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
 
@@ -202,7 +199,7 @@ public class VoxelGame {
             WIDTH = width;
             HEIGHT = height;
             mouseDirty = true;
-            glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+            glfwSetCursorPos(window, WIDTH / 2f, HEIGHT / 2f);
         });
 
         glfwSetCursorPosCallback(window, (window, xpos, ypos) -> {
@@ -237,13 +234,13 @@ public class VoxelGame {
             CAMERA.update(window);
 
             if(mouseDirty){
-                LAST_MOUSE_X = WIDTH / 2;
-                LAST_MOUSE_Y = HEIGHT / 2;
+                LAST_MOUSE_X = WIDTH / 2f;
+                LAST_MOUSE_Y = HEIGHT / 2f;
                 mouseDirty = false;
             }
 
-            MOUSE_DELTA_X = (float) (MOUSE_X - LAST_MOUSE_X);
-            MOUSE_DELTA_Y = (float) (MOUSE_Y - LAST_MOUSE_Y);
+            MOUSE_DELTA_X = MOUSE_X - LAST_MOUSE_X;
+            MOUSE_DELTA_Y = MOUSE_Y - LAST_MOUSE_Y;
 
             LAST_MOUSE_X = MOUSE_X;
             LAST_MOUSE_Y = MOUSE_Y;
@@ -254,14 +251,12 @@ public class VoxelGame {
 
     public static void main(String[] args){
         try{
-            fh = new FileHandler("log.log");
+            FileHandler fh = new FileHandler("log.log");
             LOGGER.addHandler(fh);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
             LOGGER.setUseParentHandlers(false);
-        } catch (SecurityException e){
-            VoxelGame.LOGGER.severe(e.getMessage());
-        } catch (IOException e){
+        } catch (SecurityException | IOException e){
             VoxelGame.LOGGER.severe(e.getMessage());
         }
         new VoxelGame().run();

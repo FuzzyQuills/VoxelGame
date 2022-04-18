@@ -1,4 +1,4 @@
-package org.voxelgame.rendering;
+package voxelgame.rendering;
 
 import org.joml.Vector4f;
 

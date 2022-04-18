@@ -1,4 +1,4 @@
-package org.voxelgame.rendering.lighting;
+package voxelgame.rendering.lighting;
 
 import org.joml.Vector3f;
 
@@ -12,10 +12,6 @@ public class DirectionalLight {
         this.color = color;
         this.direction = direction;
         this.intensity = intensity;
-    }
-
-    public DirectionalLight(DirectionalLight light){
-        this(new Vector3f(light.getColor()), new Vector3f(light.getDirection()), light.getIntensity());
     }
 
     public float getIntensity() {

@@ -1,9 +1,9 @@
-package org.voxelgame.rendering;
+package voxelgame.rendering;
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.voxelgame.Time;
-import org.voxelgame.VoxelGame;
+import voxelgame.Time;
+import voxelgame.VoxelGame;
 
 import static org.lwjgl.glfw.GLFW.*;
 

@@ -1,4 +1,4 @@
-package org.voxelgame;
+package voxelgame;
 
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
 

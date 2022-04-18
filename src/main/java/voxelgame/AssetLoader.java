@@ -1,8 +1,6 @@
-package org.voxelgame;
+package voxelgame;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.stream.Stream;
 
 public class AssetLoader {
     public String LoadFragmentShaderFile(String modid, String fileName){
@@ -29,12 +27,12 @@ public class AssetLoader {
         try{
             FileReader fileReader = new FileReader("src/main/resources/" + filePath);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
-            String result = "";
+            StringBuilder result = new StringBuilder();
             String line;
             while((line = bufferedReader.readLine()) != null)
-                result += line + "\n";
+                result.append(line).append("\n");
 
-            return result;
+            return result.toString();
 
         } catch(Exception e){
             VoxelGame.LOGGER.severe(e.getMessage());

@@ -1,4 +1,4 @@
-package org.voxelgame.rendering.lighting;
+package voxelgame.rendering.lighting;
 
 public class Attenuation {
     float constant;

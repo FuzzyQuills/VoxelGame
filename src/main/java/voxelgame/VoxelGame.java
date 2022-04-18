@@ -1,21 +1,13 @@
-package org.voxelgame;
+package voxelgame;
 
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.Version;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.system.MemoryStack;
-import org.voxelgame.rendering.Camera;
-import org.voxelgame.rendering.Material;
-import org.voxelgame.rendering.Mesh;
-import org.voxelgame.rendering.Shader;
-import org.voxelgame.rendering.lighting.Attenuation;
-import org.voxelgame.rendering.lighting.PointLight;
+import voxelgame.rendering.*;
+import voxelgame.rendering.lighting.Attenuation;
+import voxelgame.rendering.lighting.PointLight;
 
 import java.io.IOException;
-import java.nio.IntBuffer;
 import java.util.Objects;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
@@ -24,15 +16,12 @@ import java.util.logging.SimpleFormatter;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL43.*;
-import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.system.MemoryUtil.memUTF8;
 
 
 public class VoxelGame {
 
-    private long window;
+    private Window window;
 
     public static AssetLoader ASSET_LOADER = new AssetLoader();
     public static Logger LOGGER = Logger.getLogger("Log");
@@ -55,8 +44,8 @@ public class VoxelGame {
         init();
         loop();
 
-        glfwFreeCallbacks(window);
-        glfwDestroyWindow(window);
+        glfwFreeCallbacks(window.getWindow());
+        glfwDestroyWindow(window.getWindow());
 
 
         glfwTerminate();
@@ -64,6 +53,7 @@ public class VoxelGame {
     }
 
     private void init(){
+        /*
         GLFWErrorCallback.createPrint(System.err).set();
 
         if(!glfwInit())
@@ -107,8 +97,11 @@ public class VoxelGame {
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEPTH_TEST);
         glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> LOGGER.info("GL CALLBACK: source: " + source + " type: " + (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "") + " severity: " + severity + " message: " + memUTF8(message, length)), 0);
+        */
 
-        glfwSetKeyCallback(window, (windowHnd, key, scancode, action, mods) -> {
+        window = new Window(WIDTH, HEIGHT);
+
+        glfwSetKeyCallback(window.getWindow(), (windowHnd, key, scancode, action, mods) -> {
             if (action != GLFW_RELEASE)
                 return;
 
@@ -123,13 +116,13 @@ public class VoxelGame {
                     }
                     break;
                 case GLFW_KEY_ESCAPE:
-                    if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED){
-                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    if(glfwGetInputMode(window.getWindow(), GLFW_CURSOR) == GLFW_CURSOR_DISABLED){
+                        glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                         LAST_MOUSE_X = MOUSE_X;
                         LAST_MOUSE_Y = MOUSE_Y;
                     }
-                    else if(glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL){
-                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    else if(glfwGetInputMode(window.getWindow(), GLFW_CURSOR) == GLFW_CURSOR_NORMAL){
+                        glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                         LAST_MOUSE_X = MOUSE_X;
                         LAST_MOUSE_Y = MOUSE_Y;
                     }
@@ -173,11 +166,7 @@ public class VoxelGame {
         testMesh = new Mesh(vertices, indices, shader);
         testMesh.setPosition(new Vector3f(0.0f, 0.0f, -2.0f));
 
-        PointLight pointLight = new PointLight();
-        pointLight.setPosition(new Vector3f(0.0f, 3.0f, -2.0f));
-        pointLight.setAtt(new Attenuation(0.0f, 0.0f, 1.0f));
-        pointLight.setColor(new Vector3f(1.0f, 1.0f, 1.0f));
-        pointLight.setIntensity(1.0f);
+
 
         Material mat = new Material();
         mat.setReflectance(0.0f);
@@ -187,13 +176,12 @@ public class VoxelGame {
         mat.setSpecular(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
 
         testMesh.setMaterialUniform("material", mat);
-        testMesh.setPointLightUniform("pointLight", pointLight);
         testMesh.getShader().setUniform("ambientLight", new Vector3f(0.3f, 0.3f, 0.3f));
         testMesh.getShader().setUniform("specularPower", 1.0f);
 
         glViewport(0, 0, WIDTH, HEIGHT);
 
-        glfwSetFramebufferSizeCallback(window, (window, width, height) ->{
+        glfwSetFramebufferSizeCallback(window.getWindow(), (window, width, height) ->{
             glViewport(0, 0, width, height);
             CAMERA.setAspectRatio((float)width / (float)height);
             WIDTH = width;
@@ -202,7 +190,7 @@ public class VoxelGame {
             glfwSetCursorPos(window, WIDTH / 2f, HEIGHT / 2f);
         });
 
-        glfwSetCursorPosCallback(window, (window, xpos, ypos) -> {
+        glfwSetCursorPosCallback(window.getWindow(), (window, xpos, ypos) -> {
             MOUSE_X = (float) xpos;
             MOUSE_Y = (float) ypos;
         });
@@ -219,19 +207,30 @@ public class VoxelGame {
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        while(!glfwWindowShouldClose(window)){
+        PointLight pointLight = new PointLight();
+        pointLight.setPosition(new Vector3f(0.0f, 3.0f, -2.0f));
+        pointLight.setAtt(new Attenuation(0.0f, 0.0f, 1.0f));
+        pointLight.setColor(new Vector3f(1.0f, 1.0f, 1.0f));
+        pointLight.setIntensity(1.0f);
+
+        while(!glfwWindowShouldClose(window.getWindow())){
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             testMesh.getShader().setUniform("projection", CAMERA.getProjectionMatrix());
             testMesh.getShader().setUniform("view", CAMERA.getViewMatrix());
             testMesh.getShader().setUniform("camera_pos", CAMERA.getPosition());
+
+            pointLight.setPosition(new Vector3f((float) Math.sin(glfwGetTime()) * 3f, (float) Math.cos(glfwGetTime()) * 3f, -2.0f));
+            testMesh.setPointLightUniform("pointLight", pointLight);
+
+
             testMesh.render();
 
-            glfwSwapBuffers(window);
+            glfwSwapBuffers(window.getWindow());
 
             glfwPollEvents();
 
-            CAMERA.update(window);
+            CAMERA.update(window.getWindow());
 
             if(mouseDirty){
                 LAST_MOUSE_X = WIDTH / 2f;

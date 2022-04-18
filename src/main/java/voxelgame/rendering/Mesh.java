@@ -1,17 +1,12 @@
-package org.voxelgame.rendering;
+package voxelgame.rendering;
 
 
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.lwjgl.BufferUtils;
-import org.voxelgame.VoxelGame;
-import org.voxelgame.rendering.lighting.Attenuation;
-import org.voxelgame.rendering.lighting.DirectionalLight;
-import org.voxelgame.rendering.lighting.PointLight;
-
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayList;
+import voxelgame.VoxelGame;
+import voxelgame.rendering.lighting.Attenuation;
+import voxelgame.rendering.lighting.DirectionalLight;
+import voxelgame.rendering.lighting.PointLight;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;

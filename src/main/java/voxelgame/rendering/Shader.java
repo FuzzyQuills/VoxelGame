@@ -1,4 +1,4 @@
-package org.voxelgame.rendering;
+package voxelgame.rendering;
 
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -7,7 +7,7 @@ import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
-import org.voxelgame.VoxelGame;
+import voxelgame.VoxelGame;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;

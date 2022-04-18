@@ -4,9 +4,14 @@ package org.voxelgame.rendering;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
+import org.voxelgame.VoxelGame;
+import org.voxelgame.rendering.lighting.Attenuation;
+import org.voxelgame.rendering.lighting.DirectionalLight;
+import org.voxelgame.rendering.lighting.PointLight;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
@@ -14,7 +19,7 @@ import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class Mesh {
-    float[] vertices;
+    float[] vertexData;
     int[] indices;
     int VBO;
     int VAO;
@@ -28,10 +33,27 @@ public class Mesh {
     public Vector3f position;
     public Vector3f scale;
 
-    public Mesh(float[] vertices, int[] indices, Shader shader){
+    public Mesh(float[]vertices, int[] indices, Shader shader){
         this.shader = shader;
-        this.vertices = vertices;
+
+        // vertexData layout: [vec3 vertex, vec3 normal]
+        this.vertexData = new float[vertices.length * 2];
+        int i = 0;
+        int j = 0;
+        while(i < vertexData.length){
+            // vertices
+            vertexData[i++] = vertices[j++];
+            vertexData[i++] = vertices[j++];
+            vertexData[i++] = vertices[j++];
+
+            //normals
+            vertexData[i++] = 0.0f;
+            vertexData[i++] = 0.0f;
+            vertexData[i++] = 0.0f;
+        }
+
         this.indices = indices;
+
         VBO = glGenBuffers();
         EBO = glGenBuffers();
         VAO = glGenVertexArrays();
@@ -47,16 +69,23 @@ public class Mesh {
     }
 
     private void cleanDirty(){
+        calculateVertexNormals();
+
         glBindVertexArray(VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertexData, GL_DYNAMIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices, GL_DYNAMIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES);
+        glEnableVertexAttribArray(1);
+
+
         isDirty = false;
     }
 
@@ -81,6 +110,56 @@ public class Mesh {
                 .rotateY((float)Math.toRadians(-rotation.y))
                 .rotateZ((float)Math.toRadians(-rotation.z));
         return modelMat;
+    }
+
+    private void calculateVertexNormals(){
+        Vector3f[] vertices = new Vector3f[vertexData.length / 6];
+        Vector3f[] normals = new Vector3f[vertices.length];
+
+        for(int i = 0; i < vertexData.length / 6; i++){
+            vertices[i] = new Vector3f(
+                    vertexData[i * 6],
+                    vertexData[i * 6 + 1],
+                    vertexData[i * 6 + 2]);
+            normals[i] = new Vector3f(1.0f);
+        }
+
+        for(int i = 0; i < vertices.length; i++){
+            Vector3f a = vertices[i];
+            ArrayList<Vector3f> adjacentVertices = new ArrayList<>();
+            for(int j = 0; j < indices.length; j++){
+                //VoxelGame.LOGGER.info("V: " + vertices[indices[j]].x + " " + vertices[indices[j]].y + " " + vertices[indices[j]].z +
+                  //      " | " + a.x + " " + a.y + " " + a.z);
+                if (vertices[indices[j]].x == a.x && vertices[indices[j]].y == a.y && vertices[indices[j]].z == a.z){
+                    int currentTrig = j / 3;
+                    for(int k = 0; k < 3; k++){
+                        if(vertices[indices[currentTrig+k]].equals(a)) continue;
+                        adjacentVertices.add(vertices[indices[currentTrig+k]]);
+                    }
+                }
+            }
+            Vector3f sum = new Vector3f(0.0f);
+            for(int j = 1; j < adjacentVertices.size(); j++){
+                Vector3f b = adjacentVertices.get(j - 1);
+                Vector3f c = adjacentVertices.get(j);
+                sum.add(new Vector3f(b).sub(a)).cross(new Vector3f(c).sub(a));
+            }
+            VoxelGame.LOGGER.info("Adjacent Vertex Amount: " + adjacentVertices.size());
+
+            if(sum.x == 0 && sum.y == 0 && sum.z == 0){
+                normals[i] = sum;
+            } else {
+                normals[i] = sum.normalize();
+            }
+
+            VoxelGame.LOGGER.info("Normal: x:" + normals[i].x + " y:" + normals[i].y + " z:" + normals[i].z);
+        }
+
+        for(int i = 0; i < normals.length; i++){
+            vertexData[i * 6 + 3] = normals[i].x;
+            vertexData[i * 6 + 4] = normals[i].y;
+            vertexData[i * 6 + 5] = normals[i].z;
+        }
     }
 
     public void setDirty(){isDirty = true;}
@@ -111,5 +190,27 @@ public class Mesh {
 
     public Vector3f getRotation() {
         return rotation;
+    }
+
+    public void setDirectionalLightUniform(String name, DirectionalLight light){
+
+    }
+
+    public void setPointLightUniform(String name, PointLight light){
+        shader.setUniform(name + ".color", light.getColor());
+        shader.setUniform(name + ".position", light.getPosition());
+        shader.setUniform(name + ".intensity", light.getIntensity());
+        Attenuation att = light.getAtt();
+        shader.setUniform(name + ".att.constant", att.getConstant());
+        shader.setUniform(name + ".att.linear", att.getLinear());
+        shader.setUniform(name + ".att.exponent", att.getExponent());
+    }
+
+    public void setMaterialUniform(String name, Material mat){
+        shader.setUniform(name + ".ambient", mat.getAmbient());
+        shader.setUniform(name + ".diffuse", mat.getDiffuse());
+        shader.setUniform(name + ".specular", mat.getSpecular());
+        shader.setUniform(name + ".hasTexture", mat.isHasTexture() ? 1 : 0);
+        shader.setUniform(name + ".reflectance", mat.getReflectance());
     }
 }

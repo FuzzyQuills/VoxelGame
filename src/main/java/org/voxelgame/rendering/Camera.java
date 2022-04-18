@@ -12,7 +12,6 @@ public class Camera {
     public float znear;
     public float zfar;
     public float aspectRatio;
-
     private Vector3f position;
     private Vector3f rotation;
 
@@ -106,5 +105,9 @@ public class Camera {
         rotation.x += VoxelGame.MOUSE_DELTA_Y * VoxelGame.MOUSE_SENSITIVITY * Time.deltaTime;
 
         movePosition(offset);
+    }
+
+    public Vector3f getPosition() {
+        return position;
     }
 }

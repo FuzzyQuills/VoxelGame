@@ -3,6 +3,7 @@ package org.voxelgame;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.joml.Vector4f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.Version;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -10,8 +11,11 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import org.voxelgame.rendering.Camera;
+import org.voxelgame.rendering.Material;
 import org.voxelgame.rendering.Mesh;
 import org.voxelgame.rendering.Shader;
+import org.voxelgame.rendering.lighting.Attenuation;
+import org.voxelgame.rendering.lighting.PointLight;
 
 import java.io.IOException;
 import java.nio.DoubleBuffer;
@@ -41,7 +45,7 @@ public class VoxelGame {
     public static float MOUSE_SENSITIVITY = 5f;
     private boolean mouseDirty = true;
 
-    public static int WIDTH = 640, HEIGHT = 480;
+    public static int WIDTH = 1280, HEIGHT = 960;
 
     Mesh testMesh;
 
@@ -98,11 +102,12 @@ public class VoxelGame {
 
         glfwShowWindow(window);
 
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         GL.createCapabilities();
 
         glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEPTH_TEST);
         glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> {
             LOGGER.info("GL CALLBACK: source: " + source + " type: " + (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "") + " severity: " + severity + " message: " + memUTF8(message, length));
         }, 0);
@@ -142,16 +147,52 @@ public class VoxelGame {
 
 
 
-        float[] vertices = {0.5f,  0.5f, 0.0f,
-                            0.5f, -0.5f, 0.0f,
-                            -0.5f, -0.5f, 0.0f,
-                            -0.5f,  0.5f, 0.0f};
+        float[] vertices = {
+                1.0f, 1.0f, -1.0f,
+                1.0f, -1.0f, -1.0f,
+                1.0f, 1.0f, 1.0f,
+                1.0f, -1.0f, 1.0f,
+                -1.0f, 1.0f, -1.0f,
+                -1.0f, -1.0f, -1.0f,
+                -1.0f, 1.0f, 1.0f,
+                -1.0f, -1.0f, 1.0f
+        };
         int[] indices =
-                {0, 1, 3,
-                 1, 2, 3};
+                {
+                        4, 2, 0,
+                        2, 7, 3,
+                        6, 5, 7,
+                        1, 7, 5,
+                        0, 3, 1,
+                        4, 1 ,5,
+                        4, 6, 2,
+                        2, 6, 7,
+                        6, 4, 5,
+                        1, 3, 7,
+                        0, 2, 3,
+                        4, 0, 1
+                };
 
         testMesh = new Mesh(vertices, indices, shader);
         testMesh.setPosition(new Vector3f(0.0f, 0.0f, -2.0f));
+
+        PointLight pointLight = new PointLight();
+        pointLight.setPosition(new Vector3f(0.0f, 3.0f, 0.0f));
+        pointLight.setAtt(new Attenuation(0.0f, 0.0f, 1.0f));
+        pointLight.setColor(new Vector3f(1.0f, 1.0f, 1.0f));
+        pointLight.setIntensity(1.0f);
+
+        Material mat = new Material();
+        mat.setReflectance(1.0f);
+        mat.setHasTexture(false);
+        mat.setAmbient(new Vector4f(0.4f, 0.4f, 0.4f, 1.0f));
+        mat.setDiffuse(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
+        mat.setSpecular(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
+
+        testMesh.setMaterialUniform("material", mat);
+        testMesh.setPointLightUniform("pointLight", pointLight);
+        testMesh.getShader().setUniform("ambientLight", new Vector3f(0.3f, 0.3f, 0.3f));
+        testMesh.getShader().setUniform("specularPower", 1.0f);
 
         glViewport(0, 0, WIDTH, HEIGHT);
 
@@ -186,6 +227,7 @@ public class VoxelGame {
 
             testMesh.getShader().setUniform("projection", CAMERA.getProjectionMatrix());
             testMesh.getShader().setUniform("view", CAMERA.getViewMatrix());
+            testMesh.getShader().setUniform("camera_pos", CAMERA.getPosition());
             testMesh.render();
 
             glfwSwapBuffers(window);

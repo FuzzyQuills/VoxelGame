@@ -10,4 +10,4 @@
 build
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**
-log.log
+*.log

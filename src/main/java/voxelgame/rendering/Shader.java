@@ -8,6 +8,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import voxelgame.VoxelGame;
+import voxelgame.engine.Identifier;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -59,6 +60,10 @@ public class Shader {
 
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
+    }
+
+    public Shader(Identifier identifier){
+        this(identifier.getModid(), identifier.getName());
     }
 
     public void use(){

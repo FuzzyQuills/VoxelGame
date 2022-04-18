@@ -3,6 +3,8 @@ package voxelgame;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.Version;
+import voxelgame.engine.Identifier;
+import voxelgame.engine.registry.Registers;
 import voxelgame.rendering.*;
 import voxelgame.rendering.lighting.Attenuation;
 import voxelgame.rendering.lighting.PointLight;
@@ -20,6 +22,8 @@ import static org.lwjgl.system.MemoryUtil.memUTF8;
 
 
 public class VoxelGame {
+
+    public static final String MODID = "voxelgame";
 
     private Window window;
 
@@ -53,52 +57,6 @@ public class VoxelGame {
     }
 
     private void init(){
-        /*
-        GLFWErrorCallback.createPrint(System.err).set();
-
-        if(!glfwInit())
-            throw new IllegalStateException("Unable to initialize GLFW");
-
-        //glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Voxel Game", NULL, NULL);
-        if(window == NULL)
-            VoxelGame.LOGGER.severe("Failed to create the GLFW window");
-
-        try (MemoryStack stack = stackPush()) {
-            IntBuffer pWidth = stack.mallocInt(1);
-            IntBuffer pHeight = stack.mallocInt(1);
-
-            glfwGetWindowSize(window, pWidth, pHeight);
-
-            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-
-            assert vidmode != null;
-            glfwSetWindowPos(window,
-                    (vidmode.width() - pWidth.get(0)) / 2,
-                    (vidmode.height() - pHeight.get(0)) / 2);
-        }
-
-        glfwMakeContextCurrent(window);
-
-        glfwSwapInterval(1);
-
-        glfwShowWindow(window);
-
-        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-        GL.createCapabilities();
-
-        glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEPTH_TEST);
-        glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> LOGGER.info("GL CALLBACK: source: " + source + " type: " + (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "") + " severity: " + severity + " message: " + memUTF8(message, length)), 0);
-        */
-
         window = new Window(WIDTH, HEIGHT);
 
         glfwSetKeyCallback(window.getWindow(), (windowHnd, key, scancode, action, mods) -> {
@@ -130,9 +88,7 @@ public class VoxelGame {
             }
         });
 
-        LOGGER.info("creating shader");
-        Shader shader = new Shader("voxelgame", "test");
-        LOGGER.info("creating mesh");
+        Registers.SHADERS.register(new Identifier(MODID, "test"), new Shader(MODID, "test"));
 
 
 
@@ -163,7 +119,7 @@ public class VoxelGame {
                         4, 0, 1
                 };
 
-        testMesh = new Mesh(vertices, indices, shader);
+        testMesh = new Mesh(vertices, indices, Registers.SHADERS.get(new Identifier(MODID, "test")));
         testMesh.setPosition(new Vector3f(0.0f, 0.0f, -2.0f));
 
 

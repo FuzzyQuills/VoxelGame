@@ -8,6 +8,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import voxelgame.VoxelGame;
+import voxelgame.engine.AssetLoader;
 import voxelgame.engine.Identifier;
 
 import java.nio.FloatBuffer;
@@ -22,8 +23,8 @@ public class Shader {
 
         GL.getCapabilities();
 
-        String vertexSource = VoxelGame.ASSET_LOADER.LoadVertexShaderFile(modid, shaderName);
-        String fragmentSource = VoxelGame.ASSET_LOADER.LoadFragmentShaderFile(modid, shaderName);
+        String vertexSource = AssetLoader.LoadVertexShaderFile(modid, shaderName);
+        String fragmentSource = AssetLoader.LoadFragmentShaderFile(modid, shaderName);
 
 
         int vertexShader, fragmentShader;

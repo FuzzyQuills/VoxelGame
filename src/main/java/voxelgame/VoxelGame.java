@@ -3,6 +3,7 @@ package voxelgame;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.Version;
+import voxelgame.engine.AssetLoader;
 import voxelgame.engine.Identifier;
 import voxelgame.engine.registry.Registers;
 import voxelgame.rendering.*;
@@ -22,12 +23,11 @@ import static org.lwjgl.system.MemoryUtil.memUTF8;
 
 
 public class VoxelGame {
-
+    public static float fpsTimer = 0;
     public static final String MODID = "voxelgame";
 
-    private Window window;
+    public static Window window;
 
-    public static AssetLoader ASSET_LOADER = new AssetLoader();
     public static Logger LOGGER = Logger.getLogger("Log");
     public  static Camera CAMERA;
 
@@ -57,6 +57,8 @@ public class VoxelGame {
     }
 
     private void init(){
+        AssetLoader.init();
+
         window = new Window(WIDTH, HEIGHT);
 
         glfwSetKeyCallback(window.getWindow(), (windowHnd, key, scancode, action, mods) -> {
@@ -88,8 +90,7 @@ public class VoxelGame {
             }
         });
 
-        Registers.SHADERS.register(new Identifier(MODID, "test"), new Shader(MODID, "test"));
-
+        Registers.SHADERS.register(new Identifier(MODID, "test"));
 
 
         float[] vertices = {
@@ -140,8 +141,8 @@ public class VoxelGame {
         glfwSetFramebufferSizeCallback(window.getWindow(), (window, width, height) ->{
             glViewport(0, 0, width, height);
             CAMERA.setAspectRatio((float)width / (float)height);
-            WIDTH = width;
-            HEIGHT = height;
+            VoxelGame.window.width = WIDTH = width;
+            VoxelGame.window.height = HEIGHT = height;
             mouseDirty = true;
             glfwSetCursorPos(window, WIDTH / 2f, HEIGHT / 2f);
         });
@@ -169,8 +170,10 @@ public class VoxelGame {
         pointLight.setColor(new Vector3f(1.0f, 1.0f, 1.0f));
         pointLight.setIntensity(1.0f);
 
+        int currentFPS = (int)(1.0f / Time.deltaTime);
+
         while(!glfwWindowShouldClose(window.getWindow())){
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             testMesh.getShader().setUniform("projection", CAMERA.getProjectionMatrix());
             testMesh.getShader().setUniform("view", CAMERA.getViewMatrix());
@@ -181,6 +184,10 @@ public class VoxelGame {
 
 
             testMesh.render();
+
+            window.beginHUD();
+            window.drawString("FPS: " + currentFPS, 50, 50);
+            window.endHUD();
 
             glfwSwapBuffers(window.getWindow());
 
@@ -201,6 +208,11 @@ public class VoxelGame {
             LAST_MOUSE_Y = MOUSE_Y;
 
             Time.updateTime();
+            if(fpsTimer >= 0.5f){
+                currentFPS = (int)(1.0f / Time.deltaTime);
+                fpsTimer = 0;
+            }
+            fpsTimer += Time.deltaTime;
         }
     }
 

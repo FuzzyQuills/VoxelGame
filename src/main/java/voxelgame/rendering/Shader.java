@@ -1,9 +1,6 @@
 package voxelgame.rendering;
 
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
@@ -87,6 +84,16 @@ public class Shader {
         use();
         try(MemoryStack stack = MemoryStack.stackPush()){
             FloatBuffer fb = stack.mallocFloat(16);
+            value.get(fb);
+            int loc = glGetUniformLocation(program, name);
+            glUniformMatrix4fv(loc, false, fb);
+        }
+    }
+
+    public void setUniform(String name, Matrix3f value){
+        use();
+        try(MemoryStack stack = MemoryStack.stackPush()){
+            FloatBuffer fb = stack.mallocFloat(9);
             value.get(fb);
             int loc = glGetUniformLocation(program, name);
             glUniformMatrix4fv(loc, false, fb);

@@ -4,9 +4,8 @@ package voxelgame.rendering;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import voxelgame.VoxelGame;
-import voxelgame.rendering.lighting.Attenuation;
-import voxelgame.rendering.lighting.DirectionalLight;
-import voxelgame.rendering.lighting.PointLight;
+import voxelgame.engine.Identifier;
+import voxelgame.engine.registry.Registers;
 
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
@@ -30,8 +29,8 @@ public class Mesh {
 
     private boolean normalsProvided = false;
 
-    public Mesh(float[]vertices, int[] indices, Shader shader){
-        this.shader = shader;
+    public Mesh(float[]vertices, int[] indices, Identifier shader){
+        this.shader = Registers.SHADERS.get(shader);
 
         // vertexData layout: [vec3 vertex, vec3 normal]
         this.vertexData = new float[vertices.length * 2];
@@ -246,27 +245,5 @@ public class Mesh {
 
     public Vector3f getRotation() {
         return rotation;
-    }
-
-    public void setDirectionalLightUniform(String name, DirectionalLight light){
-
-    }
-
-    public void setPointLightUniform(String name, PointLight light){
-        shader.setUniform(name + ".color", light.getColor());
-        shader.setUniform(name + ".position", light.getPosition());
-        shader.setUniform(name + ".intensity", light.getIntensity());
-        Attenuation att = light.getAtt();
-        shader.setUniform(name + ".att.constant", att.getConstant());
-        shader.setUniform(name + ".att.linear", att.getLinear());
-        shader.setUniform(name + ".att.exponent", att.getExponent());
-    }
-
-    public void setMaterialUniform(String name, Material mat){
-        shader.setUniform(name + ".ambient", mat.getAmbient());
-        shader.setUniform(name + ".diffuse", mat.getDiffuse());
-        shader.setUniform(name + ".specular", mat.getSpecular());
-        shader.setUniform(name + ".hasTexture", mat.isHasTexture() ? 1 : 0);
-        shader.setUniform(name + ".reflectance", mat.getReflectance());
     }
 }

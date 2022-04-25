@@ -1,5 +1,6 @@
 package voxelgame;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.lwjgl.Version;
@@ -7,8 +8,6 @@ import voxelgame.engine.AssetLoader;
 import voxelgame.engine.Identifier;
 import voxelgame.engine.registry.Registers;
 import voxelgame.rendering.*;
-import voxelgame.rendering.lighting.Attenuation;
-import voxelgame.rendering.lighting.PointLight;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -32,14 +31,14 @@ public class VoxelGame {
     public  static Camera CAMERA;
 
     public static float MOUSE_X, MOUSE_Y, LAST_MOUSE_X, LAST_MOUSE_Y, MOUSE_DELTA_X, MOUSE_DELTA_Y;
-    public static float MOUSE_SENSITIVITY = 5f;
+    public static float MOUSE_SENSITIVITY = 100f;
     private boolean mouseDirty = true;
 
     public static int WIDTH = 1280, HEIGHT = 960;
 
-    Mesh testMesh;
-
     int polygonMode = GL_FILL;
+
+    Mesh raytracingCanvas;
 
 
     public void run(){
@@ -90,53 +89,17 @@ public class VoxelGame {
             }
         });
 
-        Registers.SHADERS.register(new Identifier(MODID, "test"));
-
-
-        float[] vertices = {
-                1.0f, 1.0f, -1.0f,
-                1.0f, -1.0f, -1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, -1.0f, 1.0f,
-                -1.0f, 1.0f, -1.0f,
-                -1.0f, -1.0f, -1.0f,
-                -1.0f, 1.0f, 1.0f,
-                -1.0f, -1.0f, 1.0f
-        };
-
-        int[] indices =
-                {
-                        4, 2, 0,
-                        2, 7, 3,
-                        6, 5, 7,
-                        1, 7, 5,
-                        0, 3, 1,
-                        4, 1 ,5,
-                        4, 6, 2,
-                        2, 6, 7,
-                        6, 4, 5,
-                        1, 3, 7,
-                        0, 2, 3,
-                        4, 0, 1
-                };
-
-        testMesh = new Mesh(vertices, indices, Registers.SHADERS.get(new Identifier(MODID, "test")));
-        testMesh.setPosition(new Vector3f(0.0f, 0.0f, -2.0f));
-
-
-
-        Material mat = new Material();
-        mat.setReflectance(0.0f);
-        mat.setHasTexture(false);
-        mat.setAmbient(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
-        mat.setDiffuse(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
-        mat.setSpecular(new Vector4f(1.0f, 0.5f, 0.2f, 1.0f));
-
-        testMesh.setMaterialUniform("material", mat);
-        testMesh.getShader().setUniform("ambientLight", new Vector3f(0.3f, 0.3f, 0.3f));
-        testMesh.getShader().setUniform("specularPower", 1.0f);
+        Registers.SHADERS.register(new Identifier(MODID, "raytracing"));
 
         glViewport(0, 0, WIDTH, HEIGHT);
+
+        raytracingCanvas = new Mesh(
+                new float[]{
+                        1.0f, 1.0f, 0.0f,   -1.0f, 1.0f, 0.0f,
+                        1.0f, -1.0f, 0.0f,  -1.0f, -1.0f, 0.0f},
+                new int[]{0, 1, 2, 1, 3, 2},
+                new Identifier(MODID, "raytracing")
+        );
 
         glfwSetFramebufferSizeCallback(window.getWindow(), (window, width, height) ->{
             glViewport(0, 0, width, height);
@@ -145,6 +108,7 @@ public class VoxelGame {
             VoxelGame.window.height = HEIGHT = height;
             mouseDirty = true;
             glfwSetCursorPos(window, WIDTH / 2f, HEIGHT / 2f);
+            raytracingCanvas.getShader().setUniform("WindowSize", new Vector2f(width, height));
         });
 
         glfwSetCursorPosCallback(window.getWindow(), (window, xpos, ypos) -> {
@@ -160,30 +124,19 @@ public class VoxelGame {
     }
 
     private void loop(){
-
-
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-        PointLight pointLight = new PointLight();
-        pointLight.setPosition(new Vector3f(0.0f, 3.0f, -2.0f));
-        pointLight.setAtt(new Attenuation(0.0f, 0.0f, 1.0f));
-        pointLight.setColor(new Vector3f(1.0f, 1.0f, 1.0f));
-        pointLight.setIntensity(1.0f);
+        glClearColor(.1f, .3f, .1f, 1.0f);
 
         int currentFPS = (int)(1.0f / Time.deltaTime);
 
         while(!glfwWindowShouldClose(window.getWindow())){
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            testMesh.getShader().setUniform("projection", CAMERA.getProjectionMatrix());
-            testMesh.getShader().setUniform("view", CAMERA.getViewMatrix());
-            testMesh.getShader().setUniform("camera_pos", CAMERA.getPosition());
-
-            pointLight.setPosition(new Vector3f((float) Math.sin(glfwGetTime()) * 3f, (float) Math.cos(glfwGetTime()) * 3f, -2.0f));
-            testMesh.setPointLightUniform("pointLight", pointLight);
-
-
-            testMesh.render();
+            raytracingCanvas.getShader().setUniform("CameraPosition", CAMERA.getPosition());
+            raytracingCanvas.getShader().setUniform("CameraLookAt", CAMERA.getForward());
+            raytracingCanvas.getShader().setUniform("FocalLength", 1.0f);
+            raytracingCanvas.getShader().setUniform("WindowSize", new Vector2f(WIDTH, HEIGHT));
+            raytracingCanvas.getShader().setUniform("CameraView", CAMERA.getViewMatrix());
+            raytracingCanvas.render();
 
             window.beginHUD();
             window.drawString("FPS: " + currentFPS, 50, 50);

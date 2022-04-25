@@ -1,5 +1,6 @@
 package voxelgame.rendering;
 
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import voxelgame.Time;
@@ -13,6 +14,12 @@ public class Camera {
     public float zfar;
     public float aspectRatio;
     private Vector3f position;
+
+    public Vector3f getRotation() {
+        VoxelGame.LOGGER.info("Camera Rotation: " + rotation.x + " " + rotation.y + " " + rotation.z);
+        return rotation;
+    }
+
     private Vector3f rotation;
 
     public static final float CAMERA_SPEED = 3.0f;
@@ -32,6 +39,11 @@ public class Camera {
         this.znear = znear;
         this.position = position;
         this.rotation = rotation;
+    }
+
+    public Vector3f getForward(){
+        Matrix4f mat = getViewMatrix().invert();//.invert();
+        return new Vector3f(mat.m20(), mat.m21(), mat.m22()).normalize();
     }
 
     public Matrix4f getProjectionMatrix(){

@@ -7,6 +7,8 @@ import org.lwjgl.Version;
 import voxelgame.engine.AssetLoader;
 import voxelgame.engine.Identifier;
 import voxelgame.engine.registry.Registers;
+import voxelgame.engine.world.Region;
+import voxelgame.engine.world.World;
 import voxelgame.rendering.*;
 
 import java.io.IOException;
@@ -39,7 +41,7 @@ public class VoxelGame {
     int polygonMode = GL_FILL;
 
     Mesh raytracingCanvas;
-
+    World world;
 
     public void run(){
         LOGGER.info("Using LWJGL " + Version.getVersion());
@@ -61,8 +63,9 @@ public class VoxelGame {
         window = new Window(WIDTH, HEIGHT);
 
         glfwSetKeyCallback(window.getWindow(), (windowHnd, key, scancode, action, mods) -> {
-            if (action != GLFW_RELEASE)
+            if (action != GLFW_RELEASE) {
                 return;
+            }
 
             switch(key){
                 case GLFW_KEY_F10:
@@ -101,6 +104,8 @@ public class VoxelGame {
                 new Identifier(MODID, "raytracing")
         );
 
+        raytracingCanvas.getShader().setUniform("RegionDimensions", Region.DIMENSIONS);
+
         glfwSetFramebufferSizeCallback(window.getWindow(), (window, width, height) ->{
             glViewport(0, 0, width, height);
             CAMERA.setAspectRatio((float)width / (float)height);
@@ -120,6 +125,8 @@ public class VoxelGame {
 
         CAMERA = new Camera(90.0f, 0.01f, 1000.0f,(float)WIDTH / (float)HEIGHT);
 
+        world = new World();
+
         LOGGER.info("Finished Initialization!");
     }
 
@@ -136,6 +143,8 @@ public class VoxelGame {
             raytracingCanvas.getShader().setUniform("FocalLength", 1.0f);
             raytracingCanvas.getShader().setUniform("WindowSize", new Vector2f(WIDTH, HEIGHT));
             raytracingCanvas.getShader().setUniform("CameraView", CAMERA.getViewMatrix());
+            raytracingCanvas.getShader().setUniform("RenderDistance", world.renderDistance);
+            world.BindVoxelTexture();
             raytracingCanvas.render();
 
             window.beginHUD();

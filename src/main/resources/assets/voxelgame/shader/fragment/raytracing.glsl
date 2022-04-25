@@ -4,12 +4,18 @@ out vec4 FragColor;
 uniform vec2 WindowSize;
 uniform vec3 CameraPosition;
 uniform float FocalLength;
-uniform vec3 CameraLookAt;
 uniform mat4 CameraView;
+uniform int viewDistance;
+
+uniform int RenderDistance;
+uniform int RegionDimensions;
+
+uniform sampler3D VoxelTexture;
 
 #define VFOV 90.0
 #define PI 3.14159
 #define DEG_TO_RAD PI / 180.0
+#define MAX_STEPS 128
 
 struct Ray{
     vec3 origin;
@@ -28,18 +34,19 @@ vec3 ray_at(Ray ray, float t){
     return ray.origin + t * ray.direction;
 }
 
-bool hitSphere(vec3 center, float radius, Ray r){
-    vec3 oc = r.origin - center;
-    float a = dot(r.direction, r.direction);
-    float b = 2.0 * dot(oc, r.direction);
-    float c = dot(oc, oc) - radius * radius;
-    float discriminant = b * b - 4 * a * c;
-    return (discriminant > 0);
+bool hitVoxels(Ray r, out vec4 color){
+    int step;
+    for(step = 0; step < MAX_STEPS; step++){
+
+    }
+
+    return step != MAX_STEPS;
 }
 
 vec4 ray_color(Ray r){
-    if(hitSphere(vec3(0.0, 0.0, -1.0), 0.5, r))
-        return vec4(1.0, 0.0, 0.0, 1.0);
+    vec4 color = vec4(0.0);
+    if(hitVoxels(r, color))
+        return color;
     vec3 norm_dir = normalize(r.direction);
     float t = 0.5 * (norm_dir.y + 1.0);
     return (1.0 - t) * vec4(1.0, 1.0, 1.0, 1.0) + t * vec4(0.5, 0.7, 1.0, 1.0);

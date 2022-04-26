@@ -49,19 +49,19 @@ public class VoxelGame {
         init();
         loop();
 
-        glfwFreeCallbacks(window.getWindow());
-        glfwDestroyWindow(window.getWindow());
+        //glfwFreeCallbacks(window.getWindow());
+        //glfwDestroyWindow(window.getWindow());
 
+        //Objects.requireNonNull(glfwSetErrorCallback(null)).free();
 
-        glfwTerminate();
-        Objects.requireNonNull(glfwSetErrorCallback(null)).free();
+        window.cleanup();
     }
 
     private void init(){
         AssetLoader.init();
 
         window = new Window(WIDTH, HEIGHT);
-
+/*
         glfwSetKeyCallback(window.getWindow(), (windowHnd, key, scancode, action, mods) -> {
             if (action != GLFW_RELEASE) {
                 return;
@@ -128,14 +128,16 @@ public class VoxelGame {
         world = new World();
 
         LOGGER.info("Finished Initialization!");
+ */
     }
 
     private void loop(){
-        glClearColor(.1f, .3f, .1f, 1.0f);
+        //glClearColor(.1f, .3f, .1f, 1.0f);
 
-        int currentFPS = (int)(1.0f / Time.deltaTime);
+        //int currentFPS = (int)(1.0f / Time.deltaTime);
 
         while(!glfwWindowShouldClose(window.getWindow())){
+            /*
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             raytracingCanvas.getShader().setUniform("CameraPosition", CAMERA.getPosition());
@@ -175,6 +177,9 @@ public class VoxelGame {
                 fpsTimer = 0;
             }
             fpsTimer += Time.deltaTime;
+
+            */
+            glfwPollEvents();
         }
     }
 

@@ -2,22 +2,33 @@ package voxelgame.rendering;
 
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkApplicationInfo;
+import org.lwjgl.vulkan.VkExtensionProperties;
+import org.lwjgl.vulkan.VkInstance;
+import org.lwjgl.vulkan.VkInstanceCreateInfo;
 import voxelgame.VoxelGame;
+import voxelgame.rendering.Vulkan.ValidationLayers;
 import voxelgame.rendering.hud.HUD;
 
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.charset.StandardCharsets;
 
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.glfw.GLFWVulkan.glfwGetRequiredInstanceExtensions;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_TEST;
 import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL43.*;
+import static org.lwjgl.system.MemoryStack.create;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.system.MemoryUtil.NULL;
-import static org.lwjgl.system.MemoryUtil.memUTF8;
+import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.vulkan.VK10.*;
 
 public class Window {
     public long getWindow() {
@@ -39,59 +50,55 @@ public class Window {
     public int height;
     public HUD hud;
 
+    private VkInstance instance;
+
     public Window(int width, int height){
         this.width = width;
         this.height = height;
-        GLFWErrorCallback.createPrint(System.err).set();
 
-        if (!glfwInit()) {
-            VoxelGame.LOGGER.severe("Unable to initialize GLFW");
+        if(!glfwInit()){
+            VoxelGame.LOGGER.severe("Cannot initialize GLFW!");
         }
 
-        glfwDefaultWindowHints();
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-        window = glfwCreateWindow(width, height, "Voxel Game", NULL, NULL);
-        if(window == NULL){
-            VoxelGame.LOGGER.severe(new RuntimeException("Failed to create the GLFW window").getMessage());
-        }
+        createInstance();
 
+        window = glfwCreateWindow(width, height, "VoxelGame", NULL, NULL);
+    }
+
+    private void createInstance(){
         try(MemoryStack stack = stackPush()){
-            IntBuffer pWidth = stack.mallocInt(1);
-            IntBuffer pHeight = stack.mallocInt(1);
+            VkApplicationInfo appInfo = VkApplicationInfo.calloc(stack);
 
-            glfwGetWindowSize(window, pWidth, pHeight);
+            appInfo.sType(VK_STRUCTURE_TYPE_APPLICATION_INFO);
+            appInfo.pApplicationName(stack.UTF8Safe("Voxel Game"));
+            appInfo.applicationVersion(VK_MAKE_VERSION(1, 0, 0));
+            appInfo.pEngineName(stack.UTF8Safe("No Engine"));
+            appInfo.engineVersion(VK_MAKE_VERSION(1, 0,0 ));
+            appInfo.apiVersion(VK_API_VERSION_1_0);
 
-            vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            VkInstanceCreateInfo createInfo = VkInstanceCreateInfo.calloc(stack);
+            createInfo.pApplicationInfo(appInfo);
+            createInfo.ppEnabledExtensionNames(glfwGetRequiredInstanceExtensions());
+            createInfo.ppEnabledLayerNames(null);
 
-            assert vidMode != null;
-            glfwSetWindowPos(window,
-                    (vidMode.width() - pWidth.get()) / 2,
-                    (vidMode.height() - pHeight.get()) / 2);
+            PointerBuffer instancePtr = stack.mallocPointer(1);
+
+            if(vkCreateInstance(createInfo, null, instancePtr) != VK_SUCCESS){
+                VoxelGame.LOGGER.severe("Failed to create vulkan instance!");
+                return;
+            }
+
+            instance = new VkInstance(instancePtr.get(0), createInfo);
         }
+    }
 
-        glfwMakeContextCurrent(window);
-
-        glfwSwapInterval(0);
-
-        glfwShowWindow(window);
-
-        GL.createCapabilities();
-
-        //glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_STENCIL_TEST);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-
-        glDebugMessageCallback((source, type, id, severity, length, message, userParam) -> VoxelGame.LOGGER.info("GL CALLBACK: source: " + source + " type: " + (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "") + " severity: " + severity + " message: " + memUTF8(message, length)), 0);
-
-        this.hud = new HUD();
-        hud.init(this);
+    public void cleanup(){
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        vkDestroyInstance(instance, null);
     }
 
     public Matrix4f getOrthographicView(){
@@ -99,12 +106,6 @@ public class Window {
     }
 
     public void restoreState(){
-        glEnable(GL_DEPTH_TEST);
-        //glEnable(GL_DEBUG_OUTPUT);
-        glEnable(GL_STENCIL_TEST);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
     }
 
     public void beginHUD(){

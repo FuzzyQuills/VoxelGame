@@ -36,8 +36,11 @@ vec3 ray_at(Ray ray, float t){
 
 bool hitVoxels(Ray r, out vec4 color){
     int step;
-    for(step = 0; step < MAX_STEPS; step++){
+    float step_dist = 1.0;
+    while(step < MAX_STEPS){
 
+        vec4 voxel = texture(VoxelTexture, r.at() / ((float)RenderDistance * (float)RegionDimensions));
+        step += 1 * (int)voxel.w;
     }
 
     return step != MAX_STEPS;

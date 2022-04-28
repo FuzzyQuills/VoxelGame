@@ -7,8 +7,8 @@
 #include <GLFW/glfw3.h>
 
 struct QueueFamilyIndices{
-    std::optional<uint32_t> graphicsFamily;
-    std::optional<uint32_t> presentFamily;
+    std::optional<uint32_t> m_graphicsFamily;
+    std::optional<uint32_t> m_presentFamily;
 
     bool isComplete();
 };

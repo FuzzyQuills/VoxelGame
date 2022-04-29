@@ -22,6 +22,9 @@ public:
     VkSurfaceKHR m_surface;
     VkQueue m_presentQueue;
 
+    VkCommandPool m_commandPool;
+    VkCommandBuffer m_commandBuffer;
+
     Window m_window;
 
 public:
@@ -29,6 +32,7 @@ public:
 
 public:
     void run();
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 private:
     void initWindow();
@@ -36,6 +40,8 @@ private:
     void createSurface();
     void pickPhysicalDevice();
     void createLogicalDevice();
+    void createCommandPool();
+    void createCommandBuffer();
     
 
     void mainLoop();

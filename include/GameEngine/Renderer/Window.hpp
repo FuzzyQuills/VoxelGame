@@ -4,12 +4,11 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
-#include "GameEngine/Vulkan/SwapChain.hpp"
-#include "GameEngine/Application.hpp"
+#include "GameEngine/Vulkan/Swapchain.hpp"
 
 class Window{
 public:
-    GLFWwindow* window;
+    GLFWwindow* m_window;
     uint32_t m_width = 1920, m_height = 1080;
 
     VkSwapchainKHR m_swapChain;
@@ -24,27 +23,33 @@ public:
 
     std::vector<VkFramebuffer> m_swapChainFramebuffers;
 
-private:
-    Application* m_application;
+    VkSemaphore m_imageAvailableSemaphore;
+    VkSemaphore m_renderFinishedSemaphore;
+    VkFence m_inFlightFence;
 
 public:
-    void initWindow(Application* application);
-    void initGraphics();
-    void close();
+    void initWindow();
+    void initGraphics(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    void close(VkDevice device);
+
+    void drawFrame(VkDevice device, VkCommandBuffer commandBuffer, VkQueue graphicsQueue, VkQueue presentQueue);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 private:
-    void createSwapChain();
-    void createImageViews();
-    void createRenderPass();
-    void createGraphicsPipeline();
-    void createFramebuffers();
+    void createSwapChain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    void createImageViews(VkDevice device);
+    void createRenderPass(VkDevice device);
+    void createGraphicsPipeline(VkDevice device);
+    void createFramebuffers(VkDevice device);
+public:
+    void createSyncObjects(VkDevice device);
 
 public:
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+    SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
-    VkShaderModule createShaderModule(const std::vector<char>& code);
+    VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
 };

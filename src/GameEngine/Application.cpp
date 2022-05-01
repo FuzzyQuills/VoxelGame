@@ -16,6 +16,24 @@
 #include <limits>
 #include <algorithm>
 
+#ifdef NDEBUG
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+    } else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+}
+
+void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        func(instance, debugMessenger, pAllocator);
+    }
+}
+#endif
+
 void Application::run(){
     initVulkan();
     mainLoop();
@@ -43,13 +61,9 @@ void Application::initVulkan(){
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
 
-    uint32_t glfwExtensionCount = 0;
-    const char** glfwExtensions;
-
-    glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-    createInfo.enabledExtensionCount = glfwExtensionCount;
-    createInfo.ppEnabledExtensionNames = glfwExtensions;
+    auto extensions = getRequiredExtensions();
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+    createInfo.ppEnabledExtensionNames = extensions.data();
 
     VkResult result = vkCreateInstance(&createInfo, nullptr, &m_instance);
     if(result != VK_SUCCESS){
@@ -59,15 +73,15 @@ void Application::initVulkan(){
     uint32_t extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
     
-    std::vector<VkExtensionProperties> extensions(extensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+    std::vector<VkExtensionProperties> extensionsProps(extensionCount);
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensionsProps.data());
 
     std::cout << "available extensions:\n";
-    for(const auto& extension : extensions){
+    for(const auto& extension : extensionsProps){
         std::cout << '\t' << extension.extensionName << '\n';
     }
 
-
+    setupDebugMessenger();
     createSurface();
     this->m_physicalDevice = pickPhysicalDevice(this->m_instance, this->m_surface);
     this->m_device = createLogicalDevice(this->m_physicalDevice, this->m_surface, &this->m_graphicsQueue, &this->m_presentQueue);
@@ -75,6 +89,24 @@ void Application::initVulkan(){
     createCommandPool();
     createCommandBuffer();
     m_window.createSyncObjects(m_device);
+}
+
+void Application::setupDebugMessenger(){
+#ifdef NDEBUG
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = debugCallback;
+    createInfo.pUserData = nullptr;
+
+    if(CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS){
+        throw std::runtime_error("failed to set up debug messenger!");
+    }
+
+#else
+    return;
+#endif
 }
 
 void Application::mainLoop(){
@@ -105,6 +137,11 @@ void Application::cleanup(){
     vkDestroySwapchainKHR(m_device, m_window.m_swapChain, nullptr);
     vkDestroyDevice(m_device, nullptr);
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+
+#ifdef NDEBUG
+    DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
+#endif
+
     vkDestroyInstance(m_instance, nullptr);
 
     m_window.close(m_device);
@@ -139,4 +176,16 @@ void Application::createCommandBuffer(){
     if(vkAllocateCommandBuffers(m_device, &allocInfo, &m_commandBuffer) != VK_SUCCESS){
         throw std::runtime_error("failed to allocate command buffer!");
     }
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData){
+
+    if(messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT){
+        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+    }
+    return VK_FALSE;
 }

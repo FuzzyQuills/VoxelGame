@@ -22,7 +22,7 @@ public:
 
     Window m_window;
 
-
+    VkDebugUtilsMessengerEXT m_debugMessenger;
 
 public:
     void run();
@@ -30,6 +30,7 @@ public:
 private:
     void initWindow();
     void initVulkan();
+    void setupDebugMessenger();
     void createSurface();
     void createCommandPool();
     void createCommandBuffer();
@@ -38,3 +39,9 @@ private:
     void cleanup();
 
 };
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+    void* pUserData);

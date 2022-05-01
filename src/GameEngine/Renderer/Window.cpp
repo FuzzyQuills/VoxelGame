@@ -418,7 +418,7 @@ void Window::createSyncObjects(VkDevice device){
     }
 }
 
-void Window::drawFrame(VkDevice device, VkCommandBuffer commandBuffer, VkQueue graphicsQueue, VkQueue presentQueue){
+void Window::drawFrame(VkDevice device, VkCommandBuffer commandBuffer, VkQueue* graphicsQueue, VkQueue presentQueue){
     vkWaitForFences(device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(device, 1, &m_inFlightFence);
 
@@ -445,7 +445,7 @@ void Window::drawFrame(VkDevice device, VkCommandBuffer commandBuffer, VkQueue g
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if(vkQueueSubmit(graphicsQueue, 1, &submitInfo, m_inFlightFence) != VK_SUCCESS){
+    if(vkQueueSubmit(*graphicsQueue, 1, &submitInfo, m_inFlightFence) != VK_SUCCESS){
         throw std::runtime_error("failed to submit draw command buffer!");
     }
 

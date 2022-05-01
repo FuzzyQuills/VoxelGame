@@ -7,6 +7,7 @@
 #include <set>
 #include <string>
 #include <cstring>
+#include <iostream>
 
 #include "GameEngine/Vulkan/Queue.hpp"
 #include "GameEngine/Vulkan/Swapchain.hpp"
@@ -78,6 +79,7 @@ VkDevice createLogicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surfa
 #ifdef NDEBUG
     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
     createInfo.ppEnabledLayerNames = validationLayers.data();
+    std::cout << "validation layers enabled!" << std::endl;
 #else
     createInfo.enabledLayerCount = 0;
 #endif

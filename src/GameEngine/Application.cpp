@@ -80,7 +80,7 @@ void Application::initVulkan(){
 void Application::mainLoop(){
     while(!glfwWindowShouldClose(m_window.m_window)){
         glfwPollEvents();
-        m_window.drawFrame(m_device, m_commandBuffer, m_graphicsQueue, m_presentQueue);
+        m_window.drawFrame(m_device, m_commandBuffer, &m_graphicsQueue, m_presentQueue);
     }
 
     vkDeviceWaitIdle(m_device);

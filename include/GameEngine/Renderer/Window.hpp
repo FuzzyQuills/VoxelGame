@@ -32,7 +32,7 @@ public:
     void initGraphics(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
     void close(VkDevice device);
 
-    void drawFrame(VkDevice device, VkCommandBuffer commandBuffer, VkQueue graphicsQueue, VkQueue presentQueue);
+    void drawFrame(VkDevice device, VkCommandBuffer commandBuffer, VkQueue* graphicsQueue, VkQueue presentQueue);
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
 private:

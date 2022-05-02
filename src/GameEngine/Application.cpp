@@ -134,6 +134,8 @@ void Application::cleanup(){
         vkDestroyImageView(m_device, imageView, nullptr);
     }
 
+    m_window.close(m_device);
+    
     vkDestroySwapchainKHR(m_device, m_window.m_swapChain, nullptr);
     vkDestroyDevice(m_device, nullptr);
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
@@ -143,8 +145,6 @@ void Application::cleanup(){
 #endif
 
     vkDestroyInstance(m_instance, nullptr);
-
-    m_window.close(m_device);
 }
 
 void Application::createSurface(){
